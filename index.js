@@ -1,12 +1,13 @@
 const express = require("express");
 const cors = require("cors");
 require("dotenv").config();
-const { MongoClient, ServerApiVersion } = require("mongodb");
+const { MongoClient, ServerApiVersion, ObjectId } = require("mongodb");
 const app = express();
 const port = process.env.PORT || 5000;
 
 app.use(cors());
 app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
 
 console.log(process.env.DB_USERNAME);
 console.log(process.env.DB_PASSWORD);
@@ -29,15 +30,29 @@ async function run() {
     // Connect the client to the server	(optional starting in v4.7)
     await client.connect();
 
-const contentCollection = client.db('contentDB').collection('content');
+    const contentCollection = client.db("contentDB").collection("content");
 
+    app.get("/Content/:brand", async (req, res) => {
+      const brand = req.params.brand;
+      const query = { brand: brand };
+      const newdata = await contentCollection.find(query);
+      const result = await newdata.toArray();
+      res.send(result);
+    });
 
-    app.post('/Content', async (req, res) => {
-      const addContent = req.body
-      console.log(addContent)
+    app.get("/Content", async (req, res) => {
+      const content = contentCollection.find();
+      const result = await content.toArray();
+
+      res.send(result);
+    });
+
+    app.post("/Content", async (req, res) => {
+      const addContent = req.body;
+      console.log(addContent);
       const result = await contentCollection.insertOne(addContent);
       res.send(result);
-    })
+    });
 
     // Send a ping to confirm a successful connection
     await client.db("admin").command({ ping: 1 });
