@@ -31,8 +31,9 @@ async function run() {
     await client.connect();
 
     const contentCollection = client.db("contentDB").collection("content");
+    const CartCollection = client.db("contentDB").collection("MyCartContent");
 
-    app.get("/Content/:brand", async (req, res) => {
+    app.get("/content/:brand", async (req, res) => {
       const brand = req.params.brand;
       const query = { brand: brand };
       const newdata = await contentCollection.find(query);
@@ -40,14 +41,37 @@ async function run() {
       res.send(result);
     });
 
-    app.get("/Content", async (req, res) => {
+    app.post("/addCarts", async (req, res) => {
+      const Cart = req.body;
+      const result = await CartCollection.insertOne(Cart);
+      res.send(result);
+    });
+
+    
+app.get("/addCarts", async (req, res) => {
+  let query = {};
+  if (req.query?.email) {
+    query = { email: req.query.email };
+  }
+  const result = await CartCollection.find(query).toArray();
+  res.send(result);
+});
+
+    app.get("/content", async (req, res) => {
       const content = contentCollection.find();
       const result = await content.toArray();
 
       res.send(result);
     });
 
-    app.post("/Content", async (req, res) => {
+    app.get("/contentS/:id", async (req, res) => {
+      const id = req.params.id;
+      const query = { _id: new ObjectId(id) };
+      const result = await contentCollection.findOne(query);
+      res.send(result);
+    });
+
+    app.post("/content", async (req, res) => {
       const addContent = req.body;
       console.log(addContent);
       const result = await contentCollection.insertOne(addContent);
