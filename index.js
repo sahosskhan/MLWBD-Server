@@ -5,7 +5,12 @@ const { MongoClient, ServerApiVersion, ObjectId } = require("mongodb");
 const app = express();
 const port = process.env.PORT || 5000;
 
-app.use(cors());
+const corsConfig = {
+  origin: "*",
+  credentials: true,
+  methods: ["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"],
+};
+app.use(cors(corsConfig));
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
@@ -28,7 +33,7 @@ const client = new MongoClient(uri, {
 async function run() {
   try {
     // Connect the client to the server	(optional starting in v4.7)
-    await client.connect();
+    // await client.connect();
 
     const contentCollection = client.db("contentDB").collection("content");
     const CartCollection = client.db("contentDB").collection("MyCartContent");
@@ -47,28 +52,21 @@ async function run() {
       res.send(result);
     });
 
-    
-app.get("/addCarts", async (req, res) => {
-  let query = {};
-  if (req.query?.email) {
-    query = { email: req.query.email };
-  }
-  const result = await CartCollection.find(query).toArray();
-  res.send(result);
-});
+    app.get("/addCarts", async (req, res) => {
+      let query = {};
+      if (req.query?.email) {
+        query = { email: req.query.email };
+      }
+      const result = await CartCollection.find(query).toArray();
+      res.send(result);
+    });
 
-app.delete("/addCarts/:id", async (req, res) => {
-  const id = req.params.id;
-  const query = { _id: new ObjectId(id) };
-  const result = await CartCollection.deleteOne(query);
-  res.send(result);
-});
-
-
-
-
-
-
+    app.delete("/addCarts/:id", async (req, res) => {
+      const id = req.params.id;
+      const query = { _id: new ObjectId(id) };
+      const result = await CartCollection.deleteOne(query);
+      res.send(result);
+    });
 
     app.get("/content", async (req, res) => {
       const content = contentCollection.find();
@@ -77,10 +75,34 @@ app.delete("/addCarts/:id", async (req, res) => {
       res.send(result);
     });
 
-    app.get("/contentS/:id", async (req, res) => {
+    app.get("/contents/:id", async (req, res) => {
       const id = req.params.id;
       const query = { _id: new ObjectId(id) };
       const result = await contentCollection.findOne(query);
+      res.send(result);
+    });
+
+    app.put("/contents/:id", async (req, res) => {
+      const id = req.params.id;
+      const filter = { _id: new ObjectId(id) };
+      const options = { upsert: true };
+      const updateContent = req.body;
+      const content = {
+        $set: {
+          name: updateContent.name,
+          description: updateContent.description,
+          brand: updateContent.brand,
+          type: updateContent.type,
+          price: updateContent.price,
+          rating: updateContent.rating,
+          photo: updateContent.photo,
+        },
+      };
+      const result = await contentCollection.updateOne(
+        filter,
+        content,
+        options
+      );
       res.send(result);
     });
 
@@ -92,7 +114,7 @@ app.delete("/addCarts/:id", async (req, res) => {
     });
 
     // Send a ping to confirm a successful connection
-    await client.db("admin").command({ ping: 1 });
+    // await client.db("admin").command({ ping: 1 });
     console.log(
       "Pinged your deployment. You successfully connected to MongoDB!"
     );
